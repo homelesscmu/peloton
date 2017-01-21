@@ -138,7 +138,8 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
     default: {
       result = type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
     }
-  };
+  }
+  ;
 
   return (result);
 }
