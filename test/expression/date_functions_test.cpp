@@ -49,6 +49,8 @@ void ExtractTestHelper(DatePartType part, std::string &date,
       type::ValueFactory::CastAsTimestamp(
           type::ValueFactory::GetVarcharValue(date))};
 
+  // LOG_INFO("GetVarcharValue %s", type::ValueFactory::GetVarcharValue(date).GetAs<char*>());
+
   // Invoke the Extract method and get back the result
   auto result = expression::DateFunctions::Extract(args);
 
