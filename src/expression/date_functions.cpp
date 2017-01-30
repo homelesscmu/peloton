@@ -56,6 +56,11 @@ uint32_t GetDOY(const uint64_t &timestamp) {
 // constructed using type::ValueFactory
 type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
   DatePartType date_part = args[0].GetAs<DatePartType>();
+
+  if (args[1].IsNull()) {
+    return type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
+  }
+
   uint64_t timestamp = args[1].GetAs<uint64_t>();
 
   LOG_INFO("Extracting %s from '%s' with raw val %" PRIu64 "", DatePartTypeToString(date_part).c_str(),

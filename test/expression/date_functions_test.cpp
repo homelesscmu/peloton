@@ -89,10 +89,12 @@ TEST_F(DateFunctionsTests, ExtractTest) {
       std::make_pair(DatePartType::MILLISECONDS, 14999.999),
       std::make_pair(DatePartType::MICROSECOND, 14999999),
   };
+  auto nullValue = type::ValueFactory::GetNullValueByType(type::Type::TIMESTAMP);
 
   for (auto x : data) {
     type::Value expected = type::ValueFactory::GetDecimalValue(x.second);
     ExtractTestHelper(x.first, date, expected);
+    ExtractTestHelper(x.first, nullValue, type::ValueFactory::GetNullValueByType(type::Type::DECIMAL));
   }
 }
 
