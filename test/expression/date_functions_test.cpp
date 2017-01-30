@@ -77,6 +77,9 @@ TEST_F(DateFunctionsTests, ExtractTest) {
       std::make_pair(DatePartType::DAY, 1),
       std::make_pair(DatePartType::HOUR, 12),
       std::make_pair(DatePartType::MINUTE, 13),
+      std::make_pair(DatePartType::MILLENNIUM, 3),
+      std::make_pair(DatePartType::QUARTER, 1),
+      std::make_pair(DatePartType::WEEK, 52),
 
       // Note that we support these DatePartTypes with and without
       // a trailing 's' at the end.
@@ -84,6 +87,7 @@ TEST_F(DateFunctionsTests, ExtractTest) {
       std::make_pair(DatePartType::SECONDS, 14.999999),
       std::make_pair(DatePartType::MILLISECOND, 14999.999),
       std::make_pair(DatePartType::MILLISECONDS, 14999.999),
+      std::make_pair(DatePartType::MICROSECOND, 14999999),
   };
 
   for (auto x : data) {
