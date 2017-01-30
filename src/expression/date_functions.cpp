@@ -25,7 +25,7 @@ uint32_t GetYear(const uint64_t &timestamp) {
 }
 
 uint32_t GetMonth(const uint64_t &timestamp) {
-  return timestamp / 1000000000000000 / 27 / 32; 
+  return timestamp / 1000000000000000 / 27 / 32;
 }
 
 uint32_t GetDay(const uint64_t &timestamp) {
@@ -38,8 +38,10 @@ uint32_t GetDOY(const uint64_t &timestamp) {
   uint32_t day = GetDay(timestamp);
 
   // two ugly arrays of manually accumulated days before each month
-  uint32_t acc_day[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
-  uint32_t acc_day_lunar[12] = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
+  uint32_t acc_day[12] = {0,   31,  59,  90,  120, 151,
+                          181, 212, 243, 273, 304, 334};
+  uint32_t acc_day_lunar[12] = {0,   31,  60,  91,  121, 152,
+                                182, 213, 244, 274, 305, 335};
 
   if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) {
     return acc_day_lunar[month - 1] + day;
@@ -54,7 +56,7 @@ uint32_t GetDOY(const uint64_t &timestamp) {
 // (2) The second argument is the timestamp to extract the part from
 // @return The Value returned should be a type::DecimalValue that is
 // constructed using type::ValueFactory
-type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
+type::Value DateFunctions::Extract(const std::vector<type::Value> &args) {
   DatePartType date_part = args[0].GetAs<DatePartType>();
 
   if (args[1].IsNull()) {
@@ -63,8 +65,10 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
 
   uint64_t timestamp = args[1].GetAs<uint64_t>();
 
-  LOG_INFO("Extracting %s from '%s' with raw val %" PRIu64 "", DatePartTypeToString(date_part).c_str(),
-           type::ValueFactory::GetTimestampValue(timestamp).ToString().c_str(), timestamp);
+  LOG_INFO("Extracting %s from '%s' with raw val %" PRIu64 "",
+           DatePartTypeToString(date_part).c_str(),
+           type::ValueFactory::GetTimestampValue(timestamp).ToString().c_str(),
+           timestamp);
 
   type::Value result;
 
@@ -101,15 +105,18 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
       // uint32_t dow = year % 100 / 4 + GetDay(timestamp) + magic[month];
 
       // // Subtract 1 for January or February of a leap year
-      // if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) && (month == 1 || month == 2)) {
+      // if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) && (month
+      // == 1 || month == 2)) {
       //   dow -= 1;
       // }
 
       // dow = (dow + year % 100) % 7;
 
-      uint32_t magic[28] = {5, 0, 1, 2, 3, 5, 6, 0, 1, 3, 4, 5, 6, 1, 2, 3, 4, 6, 0, 1, 2, 4, 5, 6, 0, 2, 3, 4};
+      uint32_t magic[28] = {5, 0, 1, 2, 3, 5, 6, 0, 1, 3, 4, 5, 6, 1,
+                            2, 3, 4, 6, 0, 1, 2, 4, 5, 6, 0, 2, 3, 4};
 
-      result = type::ValueFactory::GetDecimalValue((magic[year % 28] + doy - 1) % 7);
+      result =
+          type::ValueFactory::GetDecimalValue((magic[year % 28] + doy - 1) % 7);
       break;
     }
     case DatePartType::DOY: {
@@ -123,11 +130,13 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
       break;
     }
     case DatePartType::QUARTER: {
-      result = type::ValueFactory::GetDecimalValue((GetMonth(timestamp) - 1) / 3 + 1);
+      result = type::ValueFactory::GetDecimalValue(
+          (GetMonth(timestamp) - 1) / 3 + 1);
       break;
     }
     case DatePartType::WEEK: {
-      int magic[28] = {-4, -2, -1, 0, 1, -4, -3, -2, -1, 1, 2, -4, -3, -1, 0, 1, 2, -3, -2, -1, 0, 2, -4, -3, -2, 0, 1, 2};
+      int magic[28] = {-4, -2, -1, 0,  1,  -4, -3, -2, -1, 1,  2,  -4, -3, -1,
+                       0,  1,  2,  -3, -2, -1, 0,  2,  -4, -3, -2, 0,  1,  2};
 
       int doy = GetDOY(timestamp);
       uint32_t year = GetYear(timestamp);
@@ -140,7 +149,8 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
             week = 53;
             break;
           case -3:
-            week = ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) ? 53 : 52;
+            week = ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) ? 53
+                                                                           : 52;
           default:
             week = 52;
             break;
@@ -175,13 +185,15 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
     case DatePartType::SECOND: {
       uint32_t second = (timestamp / 1000000 % 100000) % 60;
       uint32_t micro = timestamp % 1000000;
-      result = type::ValueFactory::GetDecimalValue(double(second) + double(micro) / 1000000);
+      result = type::ValueFactory::GetDecimalValue(double(second) +
+                                                   double(micro) / 1000000);
       break;
     }
     case DatePartType::MILLISECOND: {
       uint32_t second = (timestamp / 1000000 % 100000) % 60;
       uint32_t micro = timestamp % 1000000;
-      result = type::ValueFactory::GetDecimalValue(double(second * 1000) + double(micro) / 1000);
+      result = type::ValueFactory::GetDecimalValue(double(second * 1000) +
+                                                   double(micro) / 1000);
       break;
     }
     case DatePartType::MICROSECOND: {
