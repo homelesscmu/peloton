@@ -122,14 +122,14 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
       break;
     }
     case DatePartType::WEEK: {
-      uint32_t magic[28] = {-4, -2, -1, 0, 1, -4, -3, -2, -1, 1, 2, -4, -3, -1, 0, 1, 2, -3, -2, -1, 0, 2, -4, -3, -2, 0, 1, 2};
+      int magic[28] = {-4, -2, -1, 0, 1, -4, -3, -2, -1, 1, 2, -4, -3, -1, 0, 1, 2, -3, -2, -1, 0, 2, -4, -3, -2, 0, 1, 2};
 
-      uint32_t doy = GetDOY(timestamp);
+      int doy = GetDOY(timestamp);
       uint32_t year = GetYear(timestamp);
 
-      uint32_t week = (doy + magic[year % 28]) / 7 + 1;
+      int week = doy + magic[year % 28];
 
-      if (week <= 0) {
+      if (week < 0) {
         switch (magic[year % 28]) {
           case -4:
             week = 53;
@@ -140,6 +140,8 @@ type::Value DateFunctions::Extract(const std::vector<type::Value>& args) {
             week = 52;
             break;
         }
+      } else {
+        week = week / 7 + 1;
       }
 
       result = type::ValueFactory::GetDecimalValue(week);
