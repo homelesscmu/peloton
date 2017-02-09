@@ -26,7 +26,20 @@ public:
     SkipList(): _cur_height(0), _head(new Entry()) {}
     ~SkipList() { delete _head;}
 
-    Entry find(KeyType target);
+    Entry find(KeyType target)
+    {
+        auto cur = _head;
+        for (int level = _cur_height; level >= 0; --level)
+        {
+            while (cur->forwards[level] && cur->forwards[level]->key < target)
+            {
+                cur = cur->forwards[level];
+            }
+        }
+        cur = cur->forwards[0];
+        return cur->key == target ? cur : nullptr;
+    }
+
     bool insert(KeyType key, ValueType val);
     bool remove(KeyType key);
 
