@@ -8,6 +8,12 @@ They have a section discussing and proving an algorithm on concurrent sorted lin
 * The novel idea in our method is the use of pointer reversal. When deleting a node x, we update the predecessor of x to point to the successor of x, in the standard way. But we also update x itself so as to point back to its former predecessor. Other threads that were passing through x at the time of its deletion can follow this reversed pointed to get back into the current list, at the correct place to continue their work.
 * When we delete a node y, we cannot immediately garbage collect y because other threads may have a pointer to y. Instead, putOnGarbageQueue(y) puts y onto a garbage queue. A node can be taken off the garbage queue any time after the completion of all searches/insertions/deletions that were in progress when the node was put on the queue.
 
+### Paper: Lock-free Queue (based on singly linked list)
+
+They have a nice pseudo-code section in the paper, and proof of correctness.
+
+http://www.research.ibm.com/people/m/michael/podc-1996.pdf
+
 
 ### Resource: Lock-Free Linked List
 
