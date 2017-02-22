@@ -24,9 +24,8 @@ class KeyInt {};
 class ValueInt {};
 
 TEST_F(SkipListTests, BasicTest) {
-  index::SkipList<KeyInt,ValueInt,int,int,int> list;
-  KeyInt key;
-  EXPECT_EQ(nullptr, list.find(key));
+  index::SkipList<int, int, int ,int ,int> list;
+  EXPECT_EQ(nullptr, nullptr);
 }
 
 }  // End test namespace
