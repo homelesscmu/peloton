@@ -27,7 +27,7 @@ class SkipList
     typedef SkipListEntry<KeyType, ValueType, MAX_LEVEL> Entry;
 
 public:
-    SkipList(): _curr_height(-1), _head(new Entry()) {}
+    SkipList(): _curr_height(-1), _head(new Entry()), _duplicate(false) {}
     ~SkipList()
     {
         auto curr = _head->forwards[0];
@@ -38,6 +38,11 @@ public:
             delete temp;
         }
         delete _head;
+    }
+
+    void set_duplicate(bool dup)
+    {
+        _duplicate = dup;
     }
 
     void display()
@@ -77,8 +82,9 @@ public:
         }
 
         curr = curr->forwards[0];
-        if (curr && curr->key == key) {
-            curr->val = val;
+        // already exist
+        if (curr && curr->key == key && !_duplicate) {
+            return false;
         }
         else {
             int new_h = rand_level();
@@ -95,8 +101,8 @@ public:
                 curr->forwards[h] = updates[h]->forwards[h];
                 updates[h]->forwards[h] = curr;
             }
+            return true;
         }
-        return true;
     }
 
     bool remove(KeyType target)
@@ -145,4 +151,5 @@ private:
 private:
     int _curr_height;
     Entry *_head;
+    bool _duplicate;
 };
