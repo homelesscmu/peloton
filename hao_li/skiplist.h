@@ -96,7 +96,7 @@ public:
                 _curr_height = new_h;
             }
             curr = new Entry(key, val);
-            for (int h = 0; h <= _curr_height; ++h)
+            for (int h = 0; h <= new_h; ++h)
             {
                 curr->forwards[h] = updates[h]->forwards[h];
                 updates[h]->forwards[h] = curr;
@@ -140,11 +140,16 @@ public:
 private:
     int rand_level()
     {
-        int level = 1;
-        while (double(std::rand()) / RAND_MAX > 0.5)
+        int r = std::rand() & ((1 << MAX_LEVEL) - 1);
+        int level = 0;
+        while (r & 1)
         {
             ++level;
+            r >>= 1;
         }
+        std::cout << "#####################" << std::endl
+                  << level << std::endl
+                  << "#####################" << std::endl;
         return level;
     }
 
