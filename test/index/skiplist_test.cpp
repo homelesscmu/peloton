@@ -23,8 +23,9 @@ class SkipListTests : public PelotonTest {};
 class KeyInt {};
 class ValueInt {};
 
+
 TEST_F(SkipListTests, BasicTest) {
-  index::SkipList<int, int, int ,int ,int> list;
+  index::skiplist::SkipList<int, int, int ,int ,int> list;
   EXPECT_EQ(nullptr, nullptr);
 }
 

@@ -43,7 +43,7 @@ class SkipListIndex : public Index {
   // typedef SkipList<KeyType, ValueType, KeyComparator, KeyEqualityChecker,
   // ValueEqualityChecker> MapType;
 
-  using MapType = SkipList<KeyType, ValueType, KeyComparator,
+  using MapType = skiplist::SkipList<KeyType, ValueType, KeyComparator,
                            KeyEqualityChecker, ValueEqualityChecker>;
 
  public:
