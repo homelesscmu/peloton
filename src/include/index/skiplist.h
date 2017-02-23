@@ -20,36 +20,37 @@
   template <typename KeyType, typename ValueType, typename KeyComparator, \
             typename KeyEqualityChecker, typename ValueEqualityChecker>
 
-#define SKIPLIST_TYPENAME KeyType,ValueType,KeyComparator,KeyEqualityChecker,ValueEqualityChecker
-
-#define MAX_LEVEL 32
 
 namespace peloton {
 namespace index {
+namespace skiplist{
 
-SKIPLIST_TEMPLATE_ARGUMENTS
+constexpr int MAX_LEVEL = 32;
+
+template <typename KeyType, typename ValueType>
 class SkipListEntry
 {
 public:
     SkipListEntry() = default;
-
     SkipListEntry(KeyType k, ValueType v): key(k), val(v) {}
-
     KeyType key;
     ValueType val;
-    std::vector<SkipListEntry<SKIPLIST_TYPENAME>*> forwards{MAX_LEVEL, nullptr};
+    std::vector<SkipListEntry<KeyType, ValueType>*> forwards{MAX_LEVEL, nullptr};
 };
+
 
 SKIPLIST_TEMPLATE_ARGUMENTS
 class SkipList
 {
-    typedef SkipListEntry<SKIPLIST_TYPENAME> Entry;
+    typedef SkipListEntry<KeyType, ValueType> Entry;
 
 public:
-    SkipList(): _curr_height(-1), _head(new Entry()), _duplicate(false) {
+
+    SkipList(): _curr_height(-1), _head(new Entry()) {
       key_comparator = nullptr;
       key_equality_checker = nullptr;
     }
+
     ~SkipList()
     {
         auto curr = _head->forwards[0];
@@ -60,11 +61,6 @@ public:
             delete temp;
         }
         delete _head;
-    }
-
-    void set_duplicate(bool dup)
-    {
-        _duplicate = dup;
     }
 
     void display()
@@ -105,7 +101,7 @@ public:
 
         curr = curr->forwards[0];
         // already exist
-        if (curr && curr->key == key && !_duplicate) {
+        if (curr && curr->key == key) {
             return false;
         }
         else {
@@ -118,7 +114,7 @@ public:
                 _curr_height = new_h;
             }
             curr = new Entry(key, val);
-            for (int h = 0; h <= _curr_height; ++h)
+            for (int h = 0; h <= new_h; ++h)
             {
                 curr->forwards[h] = updates[h]->forwards[h];
                 updates[h]->forwards[h] = curr;
@@ -162,10 +158,12 @@ public:
 private:
     int rand_level()
     {
-        int level = 1;
-        while (double(std::rand()) / RAND_MAX > 0.5)
+        int r = std::rand() & ((1L << MAX_LEVEL) - 1);
+        int level = 0;
+        while (r & 1)
         {
             ++level;
+            r >>= 1;
         }
         return level;
     }
@@ -173,11 +171,10 @@ private:
 private:
     int _curr_height;
     Entry *_head;
-    bool _duplicate;
-
     KeyComparator *key_comparator;
     KeyEqualityChecker *key_equality_checker;
 };
 
+}
 }
 }
