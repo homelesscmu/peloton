@@ -39,17 +39,26 @@ public:
 };
 
 
-SKIPLIST_TEMPLATE_ARGUMENTS
+template <typename KeyType,
+          typename ValueType,
+          typename KeyComparator = std::less<KeyType>,
+          typename KeyEqualityChecker = std::equal_to<KeyType>,
+          typename ValueEqualityChecker = std::equal_to<ValueType>>
 class SkipList
 {
     typedef SkipListEntry<KeyType, ValueType> Entry;
 
 public:
 
-    SkipList(): _curr_height(-1), _head(new Entry()) {
-      key_comparator = nullptr;
-      key_equality_checker = nullptr;
-    }
+    SkipList(KeyComparator key_cmp_obj = KeyComparator{},
+             KeyEqualityChecker key_eq_obj = KeyEqualityChecker{},
+             ValueEqualityChecker val_eq_obj = ValueEqualityChecker{})
+             : _curr_height(-1)
+             , _head(new Entry())
+             , _key_cmp_obj(key_cmp_obj)
+             , _key_eq_obj(key_eq_obj)
+             , _val_eq_obj(val_eq_obj)
+             {}
 
     ~SkipList()
     {
@@ -80,13 +89,13 @@ public:
         auto curr = _head;
         for (int level = _curr_height; level >= 0; --level)
         {
-            while (curr->forwards[level] && curr->forwards[level]->key < target)
+            while (curr->forwards[level] && _key_cmp_obj(curr->forwards[level]->key, target))
             {
                 curr = curr->forwards[level];
             }
         }
         curr = curr->forwards[0];
-        return curr && curr->key == target ? curr : nullptr;
+        return curr && _key_eq_obj(curr->key, target) ? curr : nullptr;
     }
 
     bool insert(KeyType key, ValueType val)
@@ -95,13 +104,13 @@ public:
         auto curr = _head;
         for (int h = _curr_height; h >= 0; --h)
         {
-            for (;curr->forwards[h] && curr->forwards[h]->key < key; curr = curr->forwards[h]);
+            for (;curr->forwards[h] && _key_cmp_obj(curr->forwards[h]->key, key); curr = curr->forwards[h]);
             updates[h] = curr;
         }
 
         curr = curr->forwards[0];
         // already exist
-        if (curr && curr->key == key) {
+        if (curr && _key_eq_obj(curr->key, key)) {
             return false;
         }
         else {
@@ -129,12 +138,12 @@ public:
         auto curr = _head;
         for (int h = _curr_height; h >= 0; --h)
         {
-            for (;curr->forwards[h] && curr->forwards[h]->key < target; curr = curr->forwards[h]);
+            for (;curr->forwards[h] && _key_cmp_obj(curr->forwards[h]->key, target); curr = curr->forwards[h]);
             updates[h] = curr;
         }
 
         curr = curr->forwards[0];
-        if (curr && curr->key == target) {
+        if (curr && _key_eq_obj(curr->key, target)) {
             for (int h = 0; h <= _curr_height; ++h)
             {
                 if (updates[h]->forwards[h] != curr) {
@@ -171,8 +180,9 @@ private:
 private:
     int _curr_height;
     Entry *_head;
-    KeyComparator *key_comparator;
-    KeyEqualityChecker *key_equality_checker;
+    const KeyComparator _key_cmp_obj;
+    const KeyEqualityChecker _key_eq_obj;
+    const ValueEqualityChecker _val_eq_obj;
 };
 
 }
