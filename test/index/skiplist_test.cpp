@@ -25,8 +25,13 @@ class ValueInt {};
 
 
 TEST_F(SkipListTests, BasicTest) {
-  index::skiplist::SkipList<int, int, int ,int ,int> list;
-  EXPECT_EQ(nullptr, nullptr);
+  index::skiplist::SkipList<int, int> *sl = new index::skiplist::SkipList<int, int>();
+  int key = 1;
+  int val = 1000;
+  sl->insert(key, val);
+  auto found = sl->find(key);
+  EXPECT_EQ(val, found->val);
+  delete sl;
 }
 
 }  // End test namespace
