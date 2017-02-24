@@ -12,6 +12,7 @@
 
 #include <cstdio>
 
+#include "executor/testing_executor_util.h"
 #include "common/harness.h"
 
 #include "catalog/catalog.h"
@@ -48,7 +49,6 @@
 #include "type/value_factory.h"
 
 #include "common/harness.h"
-#include "executor/executor_tests_util.h"
 #include "executor/mock_executor.h"
 
 namespace peloton {
@@ -64,21 +64,21 @@ namespace {
 
 storage::DataTable* CreateTable() {
   const int tuple_count = TESTS_TUPLES_PER_TILEGROUP;
-  std::unique_ptr<storage::DataTable> table(ExecutorTestsUtil::CreateTable());
+  std::unique_ptr<storage::DataTable> table(TestingExecutorUtil::CreateTable());
 
   // Schema for first tile group. Vertical partition is 2, 2.
   std::vector<catalog::Schema> schemas1(
-      {catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0),
-                        ExecutorTestsUtil::GetColumnInfo(1)}),
-       catalog::Schema({ExecutorTestsUtil::GetColumnInfo(2),
-                        ExecutorTestsUtil::GetColumnInfo(3)})});
+      {catalog::Schema({TestingExecutorUtil::GetColumnInfo(0),
+                        TestingExecutorUtil::GetColumnInfo(1)}),
+       catalog::Schema({TestingExecutorUtil::GetColumnInfo(2),
+                        TestingExecutorUtil::GetColumnInfo(3)})});
 
   // Schema for second tile group. Vertical partition is 1, 3.
   std::vector<catalog::Schema> schemas2(
-      {catalog::Schema({ExecutorTestsUtil::GetColumnInfo(0)}),
-       catalog::Schema({ExecutorTestsUtil::GetColumnInfo(1),
-                        ExecutorTestsUtil::GetColumnInfo(2),
-                        ExecutorTestsUtil::GetColumnInfo(3)})});
+      {catalog::Schema({TestingExecutorUtil::GetColumnInfo(0)}),
+       catalog::Schema({TestingExecutorUtil::GetColumnInfo(1),
+                        TestingExecutorUtil::GetColumnInfo(2),
+                        TestingExecutorUtil::GetColumnInfo(3)})});
 
   TestingHarness::GetInstance().GetNextTileGroupId();
 
@@ -107,9 +107,9 @@ storage::DataTable* CreateTable() {
           TestingHarness::GetInstance().GetNextTileGroupId(), table.get(),
           schemas2, column_map2, tuple_count)));
 
-  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
-  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
-  ExecutorTestsUtil::PopulateTiles(table->GetTileGroup(2), tuple_count);
+  TestingExecutorUtil::PopulateTiles(table->GetTileGroup(0), tuple_count);
+  TestingExecutorUtil::PopulateTiles(table->GetTileGroup(1), tuple_count);
+  TestingExecutorUtil::PopulateTiles(table->GetTileGroup(2), tuple_count);
 
   return table.release();
 }
@@ -158,7 +158,7 @@ TEST_F(UpdateTests, UpdatingOld) {
   auto id_column = catalog::Column(type::Type::INTEGER,
                                    type::Type::GetTypeSize(type::Type::INTEGER),
                                    "dept_id", true);
-  catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+  catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
   id_column.AddConstraint(constraint);
   auto manager_id_column = catalog::Column(
       type::Type::INTEGER, type::Type::GetTypeSize(type::Type::INTEGER),

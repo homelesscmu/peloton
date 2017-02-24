@@ -12,6 +12,8 @@
 #include "expression/date_functions.h"
 
 #include <date/date.h>
+#include <inttypes.h>
+#include <date/iso_week.h>
 
 #include "common/logger.h"
 #include "expression/abstract_expression.h"
@@ -64,19 +66,49 @@ type::Value DateFunctions::Extract(const std::vector<type::Value> &args) {
   }
 
   uint64_t timestamp = args[1].GetAs<uint64_t>();
-
-  LOG_INFO("Extracting %s from '%s' with raw val %" PRIu64 "",
-           DatePartTypeToString(date_part).c_str(),
-           type::ValueFactory::GetTimestampValue(timestamp).ToString().c_str(),
-           timestamp);
-
   type::Value result;
 
-  // HACK HACK HACK
-  // These values are hardcoded for project #1 to pass the test case
-  // You should replace all of this with your own implementation
-  // Be sure to add all of the DatePartType members!
-  // These are hardcoded for "2017-01-01 12:13:14.999999+00"
+  if (timestamp == type::PELOTON_TIMESTAMP_NULL) {
+    return type::ValueFactory::GetNullValueByType(type::Type::DECIMAL);
+  }
+
+  uint32_t micro = timestamp % 1000000;
+  timestamp /= 1000000;
+  uint32_t hour_min_sec = timestamp % 100000;
+  uint16_t sec = hour_min_sec % 60;
+  hour_min_sec /= 60;
+  uint16_t min = hour_min_sec % 60;
+  hour_min_sec /= 60;
+  uint16_t hour = hour_min_sec % 24;
+  timestamp /= 100000;
+  uint16_t year = timestamp % 10000;
+  timestamp /= 10000;
+  timestamp /= 27;  // skip time zone
+  uint16_t day = timestamp % 32;
+  timestamp /= 32;
+  uint16_t month = timestamp;
+
+  uint16_t millennium = (year - 1) / 1000 + 1;
+  uint16_t century = (year - 1) / 100 + 1;
+  uint16_t decade = year / 10;
+  uint8_t quarter = (month - 1) / 3 + 1;
+
+  double microsecond = sec * 1000000 + micro;
+  double millisecond = sec * 1000 + micro / 1000.0;
+  double second = sec + micro / 1000000.0;
+
+  date::year_month_day ymd = date::year_month_day{
+      date::year{year}, date::month{month}, date::day{day}};
+  iso_week::year_weeknum_weekday yww = iso_week::year_weeknum_weekday{ymd};
+
+  date::year_month_day year_begin =
+      date::year_month_day{date::year{year}, date::month{1}, date::day{1}};
+  date::days duration = date::sys_days{ymd} - date::sys_days{year_begin};
+
+  uint16_t dow = ((unsigned)yww.weekday()) == 7 ? 0 : (unsigned)yww.weekday();
+  uint16_t doy = duration.count() + 1;
+  uint16_t week = (unsigned)yww.weeknum();
+
   switch (date_part) {
     case DatePartType::MILLENNIUM: {
       uint32_t year = GetYear(timestamp);
@@ -84,122 +116,63 @@ type::Value DateFunctions::Extract(const std::vector<type::Value> &args) {
       break;
     }
     case DatePartType::CENTURY: {
-      uint32_t year = GetYear(timestamp);
-
-      // assuming year is always positive
-      result = type::ValueFactory::GetDecimalValue((year - 1) / 100 + 1);
-      break;
-    }
-    case DatePartType::DECADE: {
-      uint32_t year = GetYear(timestamp);
-      result = type::ValueFactory::GetDecimalValue(year / 10);
-      break;
-    }
-    case DatePartType::DOW: {
-      uint32_t doy = GetDOY(timestamp);
-      uint32_t year = GetYear(timestamp);
-
-      // // Magic number for each month
-      // uint32_t magic[13] = {0, 1, 4, 4, 0, 2, 5, 0, 3, 6, 1, 4, 6};
-
-      // uint32_t dow = year % 100 / 4 + GetDay(timestamp) + magic[month];
-
-      // // Subtract 1 for January or February of a leap year
-      // if (((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) && (month
-      // == 1 || month == 2)) {
-      //   dow -= 1;
-      // }
-
-      // dow = (dow + year % 100) % 7;
-
-      uint32_t magic[28] = {5, 0, 1, 2, 3, 5, 6, 0, 1, 3, 4, 5, 6, 1,
-                            2, 3, 4, 6, 0, 1, 2, 4, 5, 6, 0, 2, 3, 4};
-
-      result =
-          type::ValueFactory::GetDecimalValue((magic[year % 28] + doy - 1) % 7);
-      break;
-    }
-    case DatePartType::DOY: {
-      result = type::ValueFactory::GetDecimalValue(GetDOY(timestamp));
-
-      break;
-    }
-    case DatePartType::YEAR: {
-      uint32_t year = GetYear(timestamp);
-      result = type::ValueFactory::GetDecimalValue(year);
-      break;
-    }
-    case DatePartType::QUARTER: {
-      result = type::ValueFactory::GetDecimalValue(
-          (GetMonth(timestamp) - 1) / 3 + 1);
-      break;
-    }
-    case DatePartType::WEEK: {
-      int magic[28] = {-4, -2, -1, 0,  1,  -4, -3, -2, -1, 1,  2,  -4, -3, -1,
-                       0,  1,  2,  -3, -2, -1, 0,  2,  -4, -3, -2, 0,  1,  2};
-
-      int doy = GetDOY(timestamp);
-      uint32_t year = GetYear(timestamp);
-
-      int week = doy + magic[year % 28];
-
-      if (week < 0) {
-        switch (magic[year % 28]) {
-          case -4:
-            week = 53;
-            break;
-          case -3:
-            week = ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0) ? 53
-                                                                           : 52;
-          default:
-            week = 52;
-            break;
-        }
-      } else {
-        week = week / 7 + 1;
-      }
-
-      result = type::ValueFactory::GetDecimalValue(week);
-      break;
-    }
-    case DatePartType::MONTH: {
-      uint32_t month = GetMonth(timestamp);
-      result = type::ValueFactory::GetDecimalValue(month);
+      result = type::ValueFactory::GetDecimalValue(century);
       break;
     }
     case DatePartType::DAY: {
-      uint32_t day = GetDay(timestamp);
       result = type::ValueFactory::GetDecimalValue(day);
       break;
     }
+    case DatePartType::DECADE: {
+      result = type::ValueFactory::GetDecimalValue(decade);
+      break;
+    }
+    case DatePartType::DOW: {
+      result = type::ValueFactory::GetDecimalValue(dow);
+      break;
+    }
+    case DatePartType::DOY: {
+      result = type::ValueFactory::GetDecimalValue(doy);
+      break;
+    }
     case DatePartType::HOUR: {
-      uint32_t hour = (timestamp / 1000000 % 100000) / 3600;
       result = type::ValueFactory::GetDecimalValue(hour);
       break;
     }
-    case DatePartType::MINUTE: {
-      uint32_t minute = (timestamp / 1000000 % 100000) / 60 % 60;
-      result = type::ValueFactory::GetDecimalValue(minute);
+    case DatePartType::MICROSECOND: {
+      result = type::ValueFactory::GetDecimalValue(microsecond);
       break;
     }
-    case DatePartType::SECOND: {
-      uint32_t second = (timestamp / 1000000 % 100000) % 60;
-      uint32_t micro = timestamp % 1000000;
-      result = type::ValueFactory::GetDecimalValue(double(second) +
-                                                   double(micro) / 1000000);
+    case DatePartType::MILLENNIUM: {
+      result = type::ValueFactory::GetDecimalValue(millennium);
       break;
     }
     case DatePartType::MILLISECOND: {
-      uint32_t second = (timestamp / 1000000 % 100000) % 60;
-      uint32_t micro = timestamp % 1000000;
-      result = type::ValueFactory::GetDecimalValue(double(second * 1000) +
-                                                   double(micro) / 1000);
+      result = type::ValueFactory::GetDecimalValue(millisecond);
       break;
     }
-    case DatePartType::MICROSECOND: {
-      uint32_t second = (timestamp / 1000000 % 100000) % 60;
-      uint32_t micro = timestamp % 1000000;
-      result = type::ValueFactory::GetDecimalValue(second * 1000000 + micro);
+    case DatePartType::MINUTE: {
+      result = type::ValueFactory::GetDecimalValue(min);
+      break;
+    }
+    case DatePartType::MONTH: {
+      result = type::ValueFactory::GetDecimalValue(month);
+      break;
+    }
+    case DatePartType::QUARTER: {
+      result = type::ValueFactory::GetDecimalValue(quarter);
+      break;
+    }
+    case DatePartType::SECOND: {
+      result = type::ValueFactory::GetDecimalValue(second);
+      break;
+    }
+    case DatePartType::WEEK: {
+      result = type::ValueFactory::GetDecimalValue(week);
+      break;
+    }
+    case DatePartType::YEAR: {
+      result = type::ValueFactory::GetDecimalValue(year);
       break;
     }
     default: {

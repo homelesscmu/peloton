@@ -12,7 +12,7 @@
 
 #include "planner/create_plan.h"
 
-#include "../include/parser/create_statement.h"
+#include "parser/create_statement.h"
 #include "storage/data_table.h"
 #include "catalog/schema.h"
 #include "catalog/column.h"
@@ -48,13 +48,13 @@ CreatePlan::CreatePlan(parser::CreateStatement *parse_tree) {
 
       // Check main constraints
       if (col->primary) {
-        catalog::Constraint constraint(CONSTRAINT_TYPE_PRIMARY, "con_primary");
+        catalog::Constraint constraint(ConstraintType::PRIMARY, "con_primary");
         column_contraints.push_back(constraint);
         LOG_TRACE("Added a primary key constraint on column \"%s\"", col->name);
       }
 
       if (col->not_null) {
-        catalog::Constraint constraint(CONSTRAINT_TYPE_NOTNULL, "con_not_null");
+        catalog::Constraint constraint(ConstraintType::NOTNULL, "con_not_null");
         column_contraints.push_back(constraint);
       }
 
