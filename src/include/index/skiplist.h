@@ -254,9 +254,10 @@ EpochManager<KeyType, ValueType>::~EpochManager() {
     epoch_node_p = epoch_node_p->next_p;
     delete prev_node_p;
   }
+  head_epoch_p = nullptr;
 
   EpochManager<KeyType, ValueType>::ClearEpoch();
-//  assert(head_epoch_p == nullptr);
+  assert(head_epoch_p == nullptr);
 
   return;
 }
