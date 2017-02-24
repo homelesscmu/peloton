@@ -27,6 +27,8 @@ namespace skiplist{
 
 constexpr int MAX_LEVEL = 32;
 
+
+// TODO: add valid flag to support logical deletion
 template <typename KeyType, typename ValueType>
 class SkipListEntry
 {
@@ -98,6 +100,7 @@ public:
         return curr && _key_eq_obj(curr->key, target_key) ? curr : nullptr;
     }
 
+    // TODO: latch-free
     bool Insert(KeyType inserted_key, ValueType inserted_val)
     {
         std::vector<Entry*> updates(MAX_LEVEL, nullptr);
@@ -133,6 +136,7 @@ public:
     }
 
 
+    // TODO: latch-free
     bool Remove(KeyType target_key, ValueType target_val)
     {
         std::vector<Entry*> updates(MAX_LEVEL, nullptr);
